@@ -4,7 +4,7 @@ Aplicación web conversacional para diligenciar solicitudes de alta de Periferia
 
 ## Link de prueba
 
-- **URL pública:** `https://tu-app.onrender.com`
+- **URL pública:** `https://reto-01-ilu1.onrender.com`
 - **Clave de acceso:** No requiere autenticación (modo demo/offline activo por defecto; si se configura `LLM_PROVIDER=openai`, usar variables de entorno del servidor).
 
 ## Requisitos e inicio
