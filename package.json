@@ -1,0 +1,31 @@
+{
+  "name": "reto-01-registro-proveedor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agente de registro de proveedores: mapeo de datos maestros a formatos de cliente, validacion de soportes y bloqueo de firma por vigencia.",
+  "type": "module",
+  "scripts": {
+    "sync": "node --experimental-strip-types scripts/sync-modulo.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "demo": "tsx demo.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "prebuild": "npm run typecheck",
+    "dev": "tsx src/server.ts",
+    "start": "tsx src/server.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "pdf-lib": "^1.17.1",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de proveedores · PERXIA</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">P</span><span><strong>PERXIA</strong><small>Registro de proveedores</small></span></div>
+      <div class="top-right"><span class="live"><span class="dot"></span>Agente disponible</span><span class="avatar">IT</span></div>
+    </header>
+    <main class="workspace">
+      <section class="conversation" aria-label="Conversación">
+        <div class="conversation-head"><div><p class="eyebrow">ASISTENTE DE REGISTRO</p><h1>Centro de conversación</h1><p>Prepara formularios, verifica soportes y revisa tus entregables.</p></div><span class="mode">MODO SEGURO</span></div>
+        <div class="messages" id="messages" role="log" aria-live="polite"><div class="welcome"><div class="welcome-icon">✦</div><h2>¿Qué caso trabajamos hoy?</h2><p>Puedo leer la solicitud, diligenciar el formato y armar el paquete. El envío siempre requiere tu confirmación.</p><div class="suggestions"><button type="button" data-prompt="Procesa el caso co-industrias-delta">Procesar caso CO</button><button type="button" data-prompt="Procesa el caso ec-corp-andina">Procesar caso EC</button><button type="button" data-prompt="Procesa el caso hn-agroexport-sula">Procesar caso HN</button><button type="button" data-prompt="Procesa el caso pa-logistica-istmo">Procesar caso PA</button></div></div></div>
+        <div class="composer-wrap"><div id="tool-activity" class="tool-activity" role="status" aria-live="polite"></div><div id="confirm-slot"></div><form id="chat-form" class="composer"><label class="sr-only" for="message">Mensaje</label><input id="message" name="message" aria-label="Mensaje" placeholder="Escribe un mensaje o pide procesar un caso…" autocomplete="off" maxlength="4000" required><button type="submit" id="send" aria-label="Enviar mensaje">Enviar <span aria-hidden="true">↗</span></button></form><p class="composer-note">No se enviará ningún correo real. Revisa los datos antes de confirmar.</p></div>
+      </section>
+      <aside class="inspector" aria-label="Inspector de casos">
+        <div class="inspector-head"><p class="eyebrow">PANEL DE CONTROL</p><h2>Inspector de casos</h2><p>Estado de solicitudes y artefactos generados</p></div>
+        <div class="summary"><div><strong id="total-cases">—</strong><span>Casos</span></div><div><strong id="ready-cases">—</strong><span>Listos para firma</span></div><div><strong id="review-cases">—</strong><span>En revisión</span></div></div>
+        <div id="case-list" class="case-list" aria-label="Casos disponibles"></div>
+        <section id="details" class="details" aria-live="polite"><p class="empty">Selecciona un caso para consultar su checklist, borrador y registro de ejecución.</p></section>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
