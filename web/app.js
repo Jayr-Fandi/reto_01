@@ -125,4 +125,4 @@ async function submitMessage(text) {
 
 form.addEventListener("submit", (event) => { event.preventDefault(); submitMessage(input.value); });
 document.querySelectorAll("[data-prompt]").forEach((button) => button.addEventListener("click", () => submitMessage(button.dataset.prompt)));
-refreshCases().catch(showError);
+fetch("/api/reset", { method: "POST" }).then(() => refreshCases()).catch(showError);

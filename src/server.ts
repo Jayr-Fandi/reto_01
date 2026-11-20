@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFile, readdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -77,6 +77,11 @@ export function createApp(options: { directory?: string; loop?: AgentLoop } = {}
         respond(res, 200, JSON.stringify(await availableCases(directory)));
         return;
       }
+      if (req.method === "POST" && path === "/api/reset") {
+        await rm(resolve(directory, "out"), { recursive: true, force: true });
+        respond(res, 200, JSON.stringify({ ok: true }));
+        return;
+      }
       if (req.method === "POST" && path === "/api/chat") {
         if (!(req.headers["content-type"] ?? "").startsWith("application/json")) { error(res, 415, "Se requiere application/json"); return; }
         const input = chatSchema.safeParse(await bodyJson(req));
@@ -115,6 +120,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.error("PORT debe ser un puerto válido");
     process.exitCode = 1;
   } else {
+    await rm(resolve(ROOT, "out"), { recursive: true, force: true });
     createApp().listen(port, "0.0.0.0", () => console.log(`Registro de proveedor disponible en http://localhost:${port}`));
   }
 }
