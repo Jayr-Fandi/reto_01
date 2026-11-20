@@ -101,30 +101,56 @@ export class AgentLoop {
 
   private async offline(message: string, caso: string | null, detected: string | null, confirmed: boolean, perform: (name: ToolName, args: unknown) => Promise<z.infer<typeof toolResultSchema>>): Promise<string> {
     const normal = message.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    if (/(?:envi|confirm|aprob)/.test(normal)) {
-      if (!confirmed || !detected) return "Para simular el envío, confirma explícitamente el caso: «Confirmo el envío de co-industrias-delta». No se envía correo real.";
+    const negatedSend = /\b(no|nunca|sin|aun no|todavia no)\b.{0,35}\b(confirmo|apruebo|autoriz|envi|mand)\b/.test(normal);
+    const wantsProcess = /(proces|prepar|arm|paquet|solicitud|revis|formulario|caso)/.test(normal);
+    const wantsSend = !negatedSend && /(?:envi|confirm|aprob|autoriz)/.test(normal);
+
+    if (wantsSend && (!wantsProcess || confirmed)) {
+      const target = detected ?? caso;
+      if (!confirmed || !detected) {
+        const example = target ?? "co-industrias-delta";
+        return `Para simular el envío, confirma explícitamente el caso: «Confirmo el envío de ${example}». No se envía correo real.`;
+      }
       const result = await perform("proveedor_simular_envio", { caso: detected, confirmado: true });
-      return result.ok ? `Envío de ${detected} simulado tras tu confirmación. No se envió ningún correo real.` : `No pude simular el envío: ${result.error}`;
+      return result.ok ? `Envío de ${detected} simulado tras tu confirmación (out/${detected}/ENVIO-SIMULADO.md). No se envió ningún correo real.` : `No pude simular el envío: ${result.error}`;
     }
+
     if (!caso) return "Indica un caso, por ejemplo: «procesa el caso ec-corp-andina». También puedes pedir «arma el paquete» después de procesarlo.";
-    if (!/(proces|prepar|arm|paquet|solicitud|revis|formulario|caso)/.test(normal)) return `Puedo procesar ${caso}, generar el formulario o armar su paquete. ¿Qué quieres hacer?`;
+    if (!wantsProcess) return `Puedo procesar ${caso}, generar el formulario o armar su paquete. ¿Qué quieres hacer?`;
+
     const input = await perform("proveedor_leer_solicitud", { caso });
     if (!input.ok) return `No pude leer ${caso}: ${input.error}`;
     const read = readSchema.safeParse(input.data);
     if (!read.success) return "La solicitud contiene datos inesperados.";
     if (/(solicitud|leer)/.test(normal) && !/(proces|prepar|arm|paquet)/.test(normal)) return `${read.data.cliente} (${read.data.pais}): formato ${read.data.formato}, ${read.data.campos.length} campos y ${read.data.soportes.length} soportes exigidos.`;
+
     const mapped = await perform("proveedor_mapear_campos", { caso, campos: read.data.campos });
     if (!mapped.ok) return `No pude mapear ${caso}: ${mapped.error}`;
     const mapping = mappingSchema.safeParse(mapped.data);
     if (!mapping.success) return "El mapeo contiene datos inesperados.";
+
     const form = await perform("proveedor_generar_formulario", { caso, mapeo: mapped.data });
     if (!form.ok) return `No pude generar el formulario: ${form.error}`;
+
     const packageResult = await perform("proveedor_armar_paquete", { caso });
     if (!packageResult.ok) return `No pude armar el paquete: ${packageResult.error}`;
     const pkg = packageSchema.safeParse(packageResult.data);
     if (!pkg.success) return "El paquete contiene datos inesperados.";
-    const issues = pkg.data.bloqueos.length ? ` Pendientes: ${pkg.data.bloqueos.join("; ")}.` : " Todos los soportes están presentes.";
-    return `${read.data.cliente}: ${pkg.data.estado}. Formato ${read.data.formato === "portal" ? "no soportado; valores listos para copiar" : "generado"}; ${mapping.data.llenos.length} campos llenos, ${mapping.data.faltantes.length} faltantes y ${mapping.data.requiere_confirmacion.length} por confirmar.${issues} Preparé checklist y borrador; no se envió correo.`;
+
+    const llenosList = mapping.data.llenos.map((item) => (typeof item === "object" && item !== null && "etiqueta" in item ? String(item.etiqueta) : JSON.stringify(item)));
+    const faltantesList = mapping.data.faltantes.map((item) => (typeof item === "object" && item !== null && "etiqueta" in item ? String(item.etiqueta) : String(item)));
+    const soportesActualizar = pkg.data.soportes.filter((s) => s.estado !== "presente").map((s) => `${s.tipo} (${s.estado})`);
+    const issues = pkg.data.bloqueos.length ? ` Bloqueos: ${pkg.data.bloqueos.join("; ")}.` : " Todos los soportes están presentes.";
+
+    return [
+      `**${read.data.cliente}** (${caso}) — Estado: **${pkg.data.estado}** · Artefactos en \`out/${caso}/\`.`,
+      `- **Formato:** ${read.data.formato === "portal" ? "no soportado; valores listos para copiar en valores-portal.md" : `${read.data.formato.toUpperCase()} generado`}.`,
+      `- **Campos llenos (${llenosList.length}):** ${llenosList.length ? llenosList.join(", ") : "ninguno"}.`,
+      `- **Campos faltantes (${faltantesList.length}):** ${faltantesList.length ? faltantesList.join(", ") : "ninguno"}.`,
+      `- **Por confirmar (${mapping.data.requiere_confirmacion.length}):** ${mapping.data.requiere_confirmacion.length ? "identificador extranjero (NIT)" : "ninguno"}.`,
+      `- **Soportes a actualizar:** ${soportesActualizar.length ? soportesActualizar.join(", ") : "ninguno (todos vigentes)"}.${issues}`,
+      `Preparé checklist y borrador; no se envió ningún correo. ¿Deseas confirmar el envío escribiendo «Confirmo el envío de ${caso}»?`
+    ].join("\n");
   }
 
   private async online(session: Session, message: string, detected: string | null, confirmed: boolean, perform: (name: ToolName, args: unknown) => Promise<z.infer<typeof toolResultSchema>>): Promise<string> {
